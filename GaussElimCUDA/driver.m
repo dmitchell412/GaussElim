@@ -4,8 +4,8 @@ clear all
 close all
 format shortg
 
-nDim_image = 22;
-nDim_matrix = 16;
+nDim_image = 256;
+nDim_matrix = 8;
 
 h_A = randn(nDim_matrix,nDim_matrix,nDim_image,nDim_image);
 h_b = randn(nDim_matrix,nDim_image,nDim_image);
@@ -25,20 +25,23 @@ d_x  = gpuArray( h_x );
 
 ParallelGaussElimptx = parallel.gpu.CUDAKernel('ParallelGaussElim.ptx', 'ParallelGaussElim.cu');
 threadsPerBlock = 256;
-npixel = 256;
-ParallelGaussElimptx.ThreadBlockSize=[threadsPerBlock  1];
-blocksPerGrid = (npixel + threadsPerBlock -1) / threadsPerBlock;
+npixel = nDim_image*nDim_image;
+ParallelGaussElimptx.ThreadBlockSize=[threadsPerBlock, 1, 1];
+%blocksPerGrid = (npixel + threadsPerBlock -1) / threadsPerBlock;
 %blocksPerGrid = (npixel  * threadsPerBlock - 1) / threadsPerBlock;
-ParallelGaussElimptx.GridSize=[ceil(blocksPerGrid)  1];
-%ParallelGaussElimptx.GridSize=[3  1];
+%ParallelGaussElimptx.GridSize=[ceil(blocksPerGrid), 1, 1];
+ParallelGaussElimptx.GridSize=[256, 1, 1];
 
 [dAout,dbout,dxout] = feval(ParallelGaussElimptx,nDim_image,nDim_matrix,d_A,d_b,d_x);
 
 for i=1:nDim_image
     for j=1:nDim_image
         xtest(:,i,j)=h_A(:,:,i,j)\h_b(:,i,j);
-        norm(xtest(:,i,j)-dxout(:,i,j))
+        xcheck = norm(xtest(:,i,j)-dxout(:,i,j));
+        if xcheck >= 1.0e-8 
+            xcheck
+        end
     end
 end
 
-%exit
+exit

@@ -12,6 +12,7 @@ __global__ void ParallelGaussElim(
 {
 	// Assign image pixels to blocks and threads
 	int i_image = blockDim.x*blockIdx.x + threadIdx.x;
+	if (i_image > nDim_image*nDim_image) return;
 	//int i_image = blockDim.y*blockIdx.y + threadIdx.y;
 //printf("blockDim.x = %i \n",blockDim.x);
 //printf("blockIdx.x = %i \n",blockIdx.x);
@@ -46,6 +47,6 @@ __global__ void ParallelGaussElim(
 			d_x[offset_1d+i] -= d_A[offset_2d+i+j*nDim_matrix]*d_x[offset_1d+j];
 		}
         	d_x[offset_1d+i] = d_x[offset_1d+i]/d_A[offset_2d+i+i*nDim_matrix];
-if (d_x[offset_1d+i] /= 1) printf ("blkdim,id,tdid = %i,%i,%i \n",blockDim.x,blockIdx.x,threadIdx.x);
+//if (d_x[offset_1d+i] /= 1) printf ("blkdim,id,tdid = %i,%i,%i \n",blockDim.x,blockIdx.x,threadIdx.x);
 	}
 }
